@@ -115,8 +115,11 @@ func TestTheControlPlaneRegistersTheFourMechanismsInOrder(t *testing.T) {
 		// sentences are about a task's OWN copy, so a command aimed at another
 		// directory has to meet the path law first or be refused with a
 		// paragraph that is false about every path in it (taskoutside.go).
-		{"pre-action", planeNames(plane.preAction), []string{"approval", "changes", "write-scope", "tree-claim", "program-hold", "task-ground", "task-git"}},
-		{"post-feedback", planeNames(plane.postFeedback), []string{"changes", "writes", "loop"}},
+		//
+		// The IQ fork's gate leads them all (iqseam.go): a call the seam refuses
+		// never reaches the approval prompt.
+		{"pre-action", planeNames(plane.preAction), []string{"iq-seam", "approval", "changes", "write-scope", "tree-claim", "program-hold", "task-ground", "task-git"}},
+		{"post-feedback", planeNames(plane.postFeedback), []string{"iq-seam", "changes", "writes", "loop"}},
 	} {
 		if !sameNames(expected.got, expected.want) {
 			t.Errorf("%s citizens = %v, want %v", expected.hook, expected.got, expected.want)

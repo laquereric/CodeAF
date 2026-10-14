@@ -96,6 +96,15 @@ func runTests(m *testing.M) int {
 		fmt.Fprintf(os.Stderr, "session tests: could not pin furrow away: %v\n", err)
 		return 1
 	}
+	// THE IQ GATE IS OFF HERE TOO (iqseam.go): a shell that exports IQ_SEAM_URL
+	// would send every test's tool calls to a live seam, whose grants are a
+	// person's policy, not a fixture. The gate's own tests set it with t.Setenv.
+	for _, name := range []string{"IQ_SEAM_URL", "IQ_HARNESS_SESSION"} {
+		if err := os.Unsetenv(name); err != nil {
+			fmt.Fprintf(os.Stderr, "session tests: could not clear %s: %v\n", name, err)
+			return 1
+		}
+	}
 	// AND THIS PACKAGE'S SUITE IS THE OLDER BELT'S SUITE, SAID ONCE HERE.
 	//
 	// The bash belt is the product's default. Most of the tests in this package
