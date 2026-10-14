@@ -19,9 +19,15 @@ const plainReadRedirect = "the plain read handles this: "
 // read_document and the turn goes round until the wall stops it; aliasing costs
 // nothing, because the refusal fires before any paid rung is reached. Every
 // other answer of read_document (a PDF, an image, a missing file, an
-// unsupported format) passes through untouched, and a belt without read (or
-// without read_document) is returned as it came.
-func iqPlainReadAlias(tools []bare.Tool) []bare.Tool {
+// unsupported format) passes through untouched.
+//
+// THE BASH BELT CARRIES NO read (bashbelt.go: a task worker reads through its
+// shell), and it is the belt `codeaf do` runs on. Where the IQ seam has not
+// granted Bash, that worker has no way left to open a text file, so a belt
+// without read is handed one by fallback -- the same bare hand, built for the
+// workspace -- used for this answer only and never put on the belt. A nil
+// fallback, or a belt without read_document, leaves the belt as it came.
+func iqPlainReadAlias(tools []bare.Tool, fallback func() bare.Tool) []bare.Tool {
 	readAt, docAt := -1, -1
 	for index, tool := range tools {
 		switch tool.Name {
@@ -31,10 +37,16 @@ func iqPlainReadAlias(tools []bare.Tool) []bare.Tool {
 			docAt = index
 		}
 	}
-	if readAt < 0 || docAt < 0 {
+	if docAt < 0 || (readAt < 0 && fallback == nil) {
 		return tools
 	}
-	read, document := tools[readAt].Execute, tools[docAt].Execute
+	var read func(context.Context, json.RawMessage) (string, bool, error)
+	if readAt >= 0 {
+		read = tools[readAt].Execute
+	} else {
+		read = fallback().Execute
+	}
+	document := tools[docAt].Execute
 	tools[docAt].Execute = func(ctx context.Context, args json.RawMessage) (string, bool, error) {
 		text, isError, err := document(ctx, args)
 		if err != nil || !isError || !strings.HasPrefix(text, plainReadRedirect) {
@@ -55,4 +67,17 @@ func iqPlainReadAlias(tools []bare.Tool) []bare.Tool {
 		return read(ctx, forwarded)
 	}
 	return tools
+}
+
+// iqWorkspaceRead is the bare read hand for this agent's workspace, at the
+// belt's own result caps: the fallback the bash belt hands iqPlainReadAlias.
+func (a *Agent) iqWorkspaceRead() bare.Tool {
+	for _, tool := range bare.AllToolsCapped(a.config.Workspace, a.resultCaps()) {
+		if tool.Name == "read" {
+			return tool
+		}
+	}
+	return bare.Tool{Name: "read", Execute: func(context.Context, json.RawMessage) (string, bool, error) {
+		return "read is not available on this belt", true, nil
+	}}
 }

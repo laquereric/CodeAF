@@ -195,7 +195,7 @@ func (a *Agent) belt() []bare.Tool {
 		}
 	}
 	tools = append(tools, a.documentTool(), a.jobsTool(), a.manualTool())
-	tools = iqPlainReadAlias(tools) // iqread.go
+	tools = iqPlainReadAlias(tools, nil) // iqread.go
 	tools = append(tools, a.askTool())
 	// watch, on the predicate the prompt's own `watch` sentence is composed
 	// from (beltfacts.go): a node has no conversation for a delta to arrive in.

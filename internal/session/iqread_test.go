@@ -35,15 +35,39 @@ func TestIQPlainReadAliasLeavesTheRestAlone(t *testing.T) {
 	document := bare.Tool{Name: "read_document", Execute: func(context.Context, json.RawMessage) (string, bool, error) {
 		return answer, true, nil
 	}}
-	belt := iqPlainReadAlias([]bare.Tool{read, document})
+	belt := iqPlainReadAlias([]bare.Tool{read, document}, nil)
 	text, isError, err := belt[1].Execute(context.Background(), json.RawMessage(`{"path":"x.bin"}`))
 	if err != nil || !isError || text != answer || calls != 0 {
 		t.Fatalf("a non-plain refusal must pass through: %q %v %v (read ran %d)", text, isError, err, calls)
 	}
 
 	answer = plainReadRedirect + "x.txt is plain text"
-	alone := iqPlainReadAlias([]bare.Tool{document})
+	alone := iqPlainReadAlias([]bare.Tool{document}, nil)
 	if text, _, _ := alone[0].Execute(context.Background(), json.RawMessage(`{"path":"x.txt"}`)); text != answer {
-		t.Fatalf("without read on the belt the refusal stands: %q", text)
+		t.Fatalf("without read and without a fallback the refusal stands: %q", text)
+	}
+}
+
+// The bash belt has no read: the fallback answers the plain-text call, and is
+// never added to the belt.
+func TestIQPlainReadAliasFallsBackWhereTheBeltHasNoRead(t *testing.T) {
+	agent, workspace := newDocumentAgent(t, &scriptedParser{}, nil, nil)
+	name := dropFile(t, workspace, "calc.py", []byte("def add(a, b):\n    return a - b\n"))
+	var document bare.Tool
+	for _, tool := range agent.belt() {
+		if tool.Name == "read_document" {
+			document = tool
+		}
+	}
+	document.Execute = func(context.Context, json.RawMessage) (string, bool, error) {
+		return plainReadRedirect + name + " is plain text", true, nil
+	}
+	belt := iqPlainReadAlias([]bare.Tool{{Name: "bash"}, document}, agent.iqWorkspaceRead)
+	if len(belt) != 2 {
+		t.Fatalf("the fallback must not join the belt: %d tools", len(belt))
+	}
+	text, isError, err := belt[1].Execute(context.Background(), json.RawMessage(`{"path":"`+name+`"}`))
+	if err != nil || isError || !strings.Contains(text, "return a - b") {
+		t.Fatalf("the fallback read should answer with the file: %q %v %v", text, isError, err)
 	}
 }
