@@ -198,7 +198,7 @@ func (c *Client) dispatchPlan(ctx context.Context, request *ai.Request, knobs ca
 	model := c.modelFor(request)
 	plan, held := callPlanFrom(ctx)
 	if !held {
-		plan = lanes.PlanFor(lanes.Choice{}, lanes.Pace{}, RoleFrom(ctx), dispatchNow())
+		plan = slowStartPlan(lanes.PlanFor(lanes.Choice{}, lanes.Pace{}, RoleFrom(ctx), dispatchNow()))
 	}
 	plan.Model = model
 	// THE SET IS THE REQUEST'S OWN AND NOT THE CHOICE'S. A rescue's demand and a

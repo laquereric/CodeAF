@@ -4,6 +4,8 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"github.com/Agent-Field/codeaf/internal/lane/control"
 )
 
 // A SLOW START IS NOT A DEAD ENDPOINT, on a lane the person has said is slow.
@@ -21,7 +23,8 @@ import (
 // three, set by whoever knows the lane is slow -- IQ's launcher sets it when it
 // points codeaf at its local model switch. It only ever raises a bound: unset,
 // empty, unparseable or not positive, every figure is upstream's, unchanged. It
-// does not touch the mid-stream gap or the wall: a model that has started writing
+// also holds the lane controller's hedge and ceiling off a request that has not
+// yet answered ([slowStartPlan]). It does not touch the mid-stream gap or the wall: a model that has started writing
 // has finished prefilling, and those bounds were never about the start.
 func firstTokenFloor() time.Duration {
 	raw := strings.TrimSpace(os.Getenv("CODEAF_FIRST_TOKEN_TIMEOUT"))
@@ -41,4 +44,12 @@ func atLeastFirstToken(d time.Duration) time.Duration {
 		return f
 	}
 	return d
+}
+
+// slowStartPlan is the plan with the slow-start floor in it: the lane
+// controller acts on no silence before the first byte younger than the floor
+// (control.Plan.FirstFloor). Unset, the plan is upstream's.
+func slowStartPlan(plan control.Plan) control.Plan {
+	plan.FirstFloor = firstTokenFloor()
+	return plan
 }

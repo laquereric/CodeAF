@@ -527,7 +527,7 @@ func (h *hazard) still(now time.Time) time.Duration { return now.Sub(h.stillSinc
 // and the verdict cannot drift apart.
 func (h *hazard) firesAt(now time.Time) bool {
 	silence := h.silence(now)
-	if silence < h.plan.Floor {
+	if silence < h.plan.Floor || h.slowStart(now) {
 		return false
 	}
 	if h.still(now) >= h.plan.Ceiling {
@@ -556,6 +556,9 @@ func (h *hazard) verdict() Act {
 	case silence < h.plan.Floor:
 		// Under the floor a second request is racing the network rather than
 		// the lane, so nothing is acted on — but the arm may still commit.
+		return h.hold(out)
+	case h.slowStart(h.now):
+		// A lane that prefills slowly is still prefilling (Plan.FirstFloor).
 		return h.hold(out)
 	case odd && wait.Over(cost, h.plan.Margin):
 		out.Reason = word
@@ -776,4 +779,11 @@ func (h *hazard) hold(out Act) Act {
 	h.acted[Commit] = true
 	out.Kind, out.Lane, out.Reason = Commit, h.plan.Lane, "earned"
 	return out
+}
+
+// slowStart is true while nothing has arrived and the request is younger than
+// [Plan.FirstFloor]: on a lane said to prefill slowly, that silence is the
+// prefill, and neither a hedge nor the ceiling may act on it. Zero is never.
+func (h *hazard) slowStart(now time.Time) bool {
+	return h.plan.FirstFloor > 0 && h.phase == PhaseSilent && now.Sub(h.plan.Began) < h.plan.FirstFloor
 }

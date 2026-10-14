@@ -412,6 +412,11 @@ type Plan struct {
 	// Floor is the shortest silence that may be acted on. Below it a second
 	// request is racing the network rather than the lane.
 	Floor time.Duration
+	// FirstFloor is the shortest silence that may be acted on BEFORE ANYTHING
+	// HAS ARRIVED, on a lane its caller says prefills slowly (the IQ fork's
+	// CODEAF_FIRST_TOKEN_TIMEOUT, provider/slowstart.go). Zero -- every plan
+	// upstream builds -- changes nothing; past the first byte it is never read.
+	FirstFloor time.Duration
 	// Lambda is what a second of this call's wait is worth, in SECONDS PER
 	// DOLLAR. Zero is "nobody is waiting", under which no amount of money buys
 	// speed and the controller only ever reports.

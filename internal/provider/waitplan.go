@@ -43,7 +43,7 @@ func (c *Client) planFor(ctx context.Context, choice lanes.Choice, model string,
 	// of the choice, what is believed about it, the role's ceiling and λ, and
 	// the alternatives the frontier named. This layer adds only the four things
 	// it is the only one to know.
-	plan := lanes.PlanFor(choice, lanes.PaceFor(lanes.ID{Model: model, Lane: lanes.HeadOf(choice)}, now), RoleFrom(ctx), now)
+	plan := slowStartPlan(lanes.PlanFor(choice, lanes.PaceFor(lanes.ID{Model: model, Lane: lanes.HeadOf(choice)}, now), RoleFrom(ctx), now))
 	// ── and then the four things only the transport knows
 	//
 	// A PIN IS WHAT THE CHOICE SAYS IT IS, AND NEVER THE LENGTH OF `Only`: the

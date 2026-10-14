@@ -567,7 +567,7 @@ func (c *Client) sendShaped(ctx context.Context, request *ai.Request, knobs call
 	// wearing one name. A race has already stamped its own (hedge.go), and every
 	// arm of it inherits that one deadline and that one list of moves.
 	if _, held := callPlanFrom(ctx); !held {
-		ctx = withCallPlan(ctx, lanes.PlanFor(lanes.Choice{}, lanes.Pace{}, RoleFrom(ctx), dispatchNow()))
+		ctx = withCallPlan(ctx, slowStartPlan(lanes.PlanFor(lanes.Choice{}, lanes.Pace{}, RoleFrom(ctx), dispatchNow())))
 	}
 	// AND THE CALL'S ONE LANE CHOICE IS STAMPED BESIDE ITS ONE BUDGET, ON THE
 	// SAME DOOR AND FOR THE SAME REASON (lanes.go's [Client.withLaneChoice]).
