@@ -747,7 +747,7 @@ func (c *Client) send(ctx context.Context, request *ai.Request, knobs callKnobs,
 		// Error bodies can stall too. They are read below before a retry, so
 		// they need the same idle bound as successful streaming bodies.
 		if stream {
-			response.Body = newIdleWatchdog(response.Body, streamIdleTimeout, cancelAttempt)
+			response.Body = newIdleWatchdog(response.Body, atLeastFirstToken(streamIdleTimeout), cancelAttempt)
 		}
 		// The provider's comeback instruction is read before the slot goes back,
 		// because it is what tells the limiter how wide this 429's window is:

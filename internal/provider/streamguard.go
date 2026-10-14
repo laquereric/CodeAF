@@ -381,7 +381,7 @@ func boundsFor(role lanes.Role) stallBounds {
 		floor = gap
 	}
 	return stallBounds{
-		first: max(stretch(stallFirstBound, patience), floor),
+		first: atLeastFirstToken(max(stretch(stallFirstBound, patience), floor)), // slowstart.go
 		gap:   max(gap, floor),
 		// THE BUFFERED CAP IS NOT THE ROLE'S TO STRETCH, and this is the one
 		// line of the three that changed on 2026-09-10.

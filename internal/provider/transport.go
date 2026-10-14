@@ -156,7 +156,7 @@ func buildTransports() {
 	}
 
 	streaming = shared.Clone()
-	streaming.ResponseHeaderTimeout = responseHeaderTimeout
+	streaming.ResponseHeaderTimeout = atLeastFirstToken(responseHeaderTimeout) // slowstart.go
 }
 
 // SharedTransport is the process-wide connection pool for provider traffic.
