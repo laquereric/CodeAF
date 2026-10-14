@@ -197,6 +197,7 @@ func (p *controlPlane) register(hook any) {
 // not have.
 func (a *Agent) controlPlaneFor() *controlPlane {
 	plane := &controlPlane{}
+	plane.register(&iqSeam{agent: a}) // IQ: the common CpCp seam first (UC_MetaHarness adapters/codeaf)
 	plane.register(approvalGate{agent: a})
 	plane.register(&changeLedger{agent: a})
 	// AND THE WRITE SEAM BESIDE IT (writeseam.go), which asks the same question
