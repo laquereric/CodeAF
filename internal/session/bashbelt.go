@@ -61,6 +61,7 @@ func bashBeltSourceCaps() bare.Caps {
 func (a *Agent) bashBelt() []bare.Tool {
 	tools := []bare.Tool{a.branchBash()}
 	tools = append(tools, a.documentTool(), a.jobsTool(), a.manualTool())
+	tools = iqPlainReadAlias(tools) // iqread.go
 	// ASK IS OFF THIS BELT. A bash-belt worker coordinates through the plan CLI
 	// and reports through `plandb done`; there is no consent gate to reach the
 	// person with, and the belt is not the place for a question the loop already

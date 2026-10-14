@@ -323,12 +323,14 @@ func TestPlainTextIsSentBackToRead(t *testing.T) {
 	agent, workspace := newDocumentAgent(t, parser, nil, nil)
 	name := dropFile(t, workspace, "notes.txt", []byte("the quick brown fox\njumped over it\n"))
 
+	// The IQ fork aliases this call to read on the belt (iqread.go): the text
+	// comes back, read for free, instead of a refusal naming read.
 	text, isError := documentTool(t, agent, map[string]any{"path": name})
-	if !isError {
-		t.Fatalf("a wrong-hand call is a tool error the model can act on: %q", text)
+	if isError {
+		t.Fatalf("on the IQ fork a plain-text read_document is read: %q", text)
 	}
-	if !strings.Contains(text, "the plain read handles this") {
-		t.Fatalf("the guard should name the hand that does this free: %q", text)
+	if !strings.Contains(text, "the quick brown fox") {
+		t.Fatalf("the alias should answer with the file's text: %q", text)
 	}
 	if calls := len(parser.requests()); calls != 0 {
 		t.Fatalf("a text file reached the paid rungs %d times", calls)

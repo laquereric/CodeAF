@@ -309,7 +309,7 @@ func (a *Agent) readDocument(ctx context.Context, path, question string, offset,
 		// prints a plain file as-is and refuses the rest in its own words.
 		switch {
 		case errors.Is(err, ErrPlainDocument):
-			return fmt.Sprintf("the plain read handles this: %s is plain text — call read, which opens it locally and free", shownPath(path)), true, nil
+			return plainReadRedirect + fmt.Sprintf("%s is plain text — call read, which opens it locally and free", shownPath(path)), true, nil
 		case errors.Is(err, ErrUnsupportedDocument):
 			return fmt.Sprintf("read_document reads PDFs, images (png, jpeg, webp, gif) and office documents (docx, xlsx, pptx); %s is none of those", shownPath(path)), true, nil
 		}
