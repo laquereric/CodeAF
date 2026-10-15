@@ -9,11 +9,11 @@
 // the control plane's pre-action chain, so this citizen is where the common CpCp seam (UC_MetaHarness
 // seam_server.py, IQ_SEAM_URL) is asked, exactly as the Claude Code hook and the OpenCode plugin ask it:
 //
-//   PreAction     POST /push {operationId, tool, args (path-ish keys only), session, harness_session}.
-//                 refused -> the call does not run and the model is told why; the seam unreachable -> refused
-//                 (fail closed); a budget `ask` -> CodeAF's own consent question when a person is attached,
-//                 refused when nobody is (a headless run cannot answer it).
-//   PostFeedback  POST /observe per call {operationId, ok, error, duration_ms, harness_session} -- never blocks.
+//	PreAction     POST /push {operationId, tool, args (path-ish keys only), session, harness_session}.
+//	              refused -> the call does not run and the model is told why; the seam unreachable -> refused
+//	              (fail closed); a budget `ask` -> CodeAF's own consent question when a person is attached,
+//	              refused when nobody is (a headless run cannot answer it).
+//	PostFeedback  POST /observe per call {operationId, ok, error, duration_ms, harness_session} -- never blocks.
 //
 // The operationId is iq:op:af-<session>-<tool call id>, so push and outcome join with no shared state beyond
 // the start time kept here. IQ_SEAM_URL unset -> the citizen is inert and CodeAF behaves as upstream built it.
@@ -21,19 +21,16 @@
 package session
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
-	"os"
-	"path/filepath"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/Agent-Field/agentfield/sdk/go/ai"
 	"github.com/Agent-Field/codeaf/internal/approval"
+	"github.com/Agent-Field/codeaf/internal/iqgate"
 )
 
 type iqSeam struct {
@@ -57,50 +54,13 @@ type iqVerdict struct {
 
 func (*iqSeam) Name() string { return "iq-seam" }
 
-func iqSeamURL() string { return strings.TrimRight(strings.TrimSpace(os.Getenv("IQ_SEAM_URL")), "/") }
-
-func iqCredential() string {
-	if v := strings.TrimSpace(os.Getenv("IQ_HARNESS_SESSION")); v != "" {
-		return v
-	}
-	home, _ := os.UserHomeDir()
-	b, err := os.ReadFile(filepath.Join(home, ".iq", "harness-token"))
-	if err != nil {
-		return ""
-	}
-	return strings.TrimSpace(string(b))
-}
-
-var iqClient = &http.Client{Timeout: 5 * time.Second}
-
+// The seam client is internal/iqgate, shared with the leaf toolbox (internal/exec/iqgate.go).
+func iqSeamURL() string    { return iqgate.URL() }
+func iqCredential() string { return iqgate.Credential() }
 func iqPost(base, path string, body any) (map[string]any, error) {
-	buf, _ := json.Marshal(body)
-	resp, err := iqClient.Post(base+path, "application/json", bytes.NewReader(buf))
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	out := map[string]any{}
-	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
-		return nil, fmt.Errorf("unreadable seam answer: %w", err)
-	}
-	return out, nil
+	return iqgate.Post(base, path, body)
 }
-
-// iqSmallArgs keeps only the path-ish keys the seam names an artifact by -- never contents or commands.
-func iqSmallArgs(raw string) map[string]any {
-	var args map[string]any
-	if json.Unmarshal([]byte(raw), &args) != nil {
-		return map[string]any{}
-	}
-	keep := map[string]any{}
-	for _, k := range []string{"path", "file", "file_path", "filePath", "dir", "directory", "pattern", "glob"} {
-		if v, ok := args[k]; ok {
-			keep[k] = v
-		}
-	}
-	return keep
-}
+func iqSmallArgs(raw string) map[string]any { return iqgate.SmallArgs(raw) }
 
 func (s *iqSeam) sessionKey() string {
 	if s.agent != nil && strings.TrimSpace(s.agent.id) != "" {

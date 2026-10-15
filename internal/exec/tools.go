@@ -451,6 +451,8 @@ type Toolbox struct {
 	// job with no siblings — the schema is only carried where somebody is
 	// listening. Installed from Task.Share at run start.
 	share func(line string) error
+
+	iq iqLeaf // iqgate.go: the IQ seam's view of this toolbox
 }
 
 // The optional capability families, and the whole of why they are optional.
@@ -1016,10 +1018,10 @@ func reflexPromotion(calls []ai.ToolCall) (string, bool) {
 	return "", false
 }
 
-// Execute dispatches one call. An unknown name is answered with the valid list
+// execute dispatches one call (Execute, iqgate.go, asks the IQ seam first). An unknown name is answered with the valid list
 // rather than refused, because a model that guessed a tool name can recover
 // from being told the real ones and cannot recover from a dead loop.
-func (t *Toolbox) Execute(ctx context.Context, name string, arguments string) (outcome Result) {
+func (t *Toolbox) execute(ctx context.Context, name string, arguments string) (outcome Result) {
 	// A tool that panics is one bad call, not a dead worker. The model reads
 	// the fault the way it reads any other tool error and picks another move;
 	// the stack goes to the log, where it is useful.
