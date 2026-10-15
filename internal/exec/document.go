@@ -89,6 +89,9 @@ func (t *Toolbox) readDocument(ctx context.Context, args map[string]any) Result 
 	if err != nil {
 		return errorf("%v", err)
 	}
+	if info, statErr := os.Stat(full); statErr == nil && info.IsDir() {
+		return t.listDirectory(path, full) // IQ: a directory is listed (iqread.go)
+	}
 	mediaType, supported := documentMediaType(full)
 	if !supported {
 		if info, statErr := os.Stat(full); statErr == nil && !info.IsDir() && iqLooksLikePlainText(full) {

@@ -123,8 +123,8 @@ func (t *Toolbox) iqPlainDocumentDefinition(catalog map[string]ai.ToolDefinition
 	if !iqPlainDocuments() {
 		return
 	}
-	catalog["read_document"] = define("read_document", "Read a text or source file (numbered lines; page with offset and limit), or a PDF, DOCX or PPTX into text. Free and local for text; scanned documents escalate to OCR through the rail. Repeat document reads are cached.", map[string]any{
-		"path":     prop("string", "workspace-relative path: a text or source file, or a PDF, DOCX or PPTX"),
+	catalog["read_document"] = define("read_document", "Read a text or source file (numbered lines; page with offset and limit), list a directory's files, or read a PDF, DOCX or PPTX into text. Free and local for text; scanned documents escalate to OCR through the rail. Repeat document reads are cached.", map[string]any{
+		"path":     prop("string", "workspace-relative path: a text or source file, a directory (\".\" for the workspace), or a PDF, DOCX or PPTX"),
 		"offset":   prop("integer", "text files: first line to show, default 1"),
 		"limit":    prop("integer", "text files: how many lines, default 2000"),
 		"pages":    prop("string", "optional PDF page range such as 1-5"),
@@ -171,4 +171,44 @@ func (w *Workspace) Consulted(leaf string) []string {
 	}
 	sort.Strings(paths)
 	return paths
+}
+
+const iqListEntries = 500
+
+// listDirectory answers read_document on a directory: one level, sorted, directories first with a trailing
+// slash, files with their size. Under a policy that refuses sh it is the worker's only way to see what is there.
+func (t *Toolbox) listDirectory(path, full string) Result {
+	entries, err := os.ReadDir(full)
+	if err != nil {
+		return errorf("could not list %s", filepath.ToSlash(path))
+	}
+	shown := filepath.ToSlash(filepath.Clean(path))
+	if len(entries) == 0 {
+		return Result{Content: shown + "/ is empty"}
+	}
+	var dirs, files []string
+	for _, entry := range entries {
+		if entry.IsDir() {
+			dirs = append(dirs, entry.Name()+"/")
+			continue
+		}
+		size := ""
+		if info, err := entry.Info(); err == nil {
+			size = fmt.Sprintf("\t%d bytes", info.Size())
+		}
+		files = append(files, entry.Name()+size)
+	}
+	sort.Strings(dirs)
+	sort.Strings(files)
+	lines := append(dirs, files...)
+	var out strings.Builder
+	fmt.Fprintf(&out, "%s/ (%d directories, %d files)\n", shown, len(dirs), len(files))
+	for i, line := range lines {
+		if i == iqListEntries {
+			fmt.Fprintf(&out, "(%d more not shown)\n", len(lines)-i)
+			break
+		}
+		out.WriteString(line + "\n")
+	}
+	return Result{Content: out.String()}
 }

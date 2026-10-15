@@ -71,3 +71,25 @@ func TestIQReadDocumentIsConsulted(t *testing.T) {
 		t.Fatalf("consulted = %v", got)
 	}
 }
+
+// A directory is listed -- directories first, files with sizes -- and an empty one says so.
+func TestIQReadDocumentListsADirectory(t *testing.T) {
+	space := workspace(t)
+	root := space.Root()
+	_ = os.MkdirAll(filepath.Join(root, "shop", "sub"), 0o755)
+	_ = os.WriteFile(filepath.Join(root, "shop", "cart.py"), []byte("x = 1\n"), 0o644)
+	_ = os.WriteFile(filepath.Join(root, "shop", "__init__.py"), nil, 0o644)
+	_ = os.MkdirAll(filepath.Join(root, "empty"), 0o755)
+	tools := NewToolbox(space, "3", nil)
+	listed := tools.Execute(context.Background(), "read_document", `{"path":"shop"}`)
+	want := "shop/ (1 directories, 2 files)\nsub/\n__init__.py\t0 bytes\ncart.py\t6 bytes\n"
+	if listed.IsError || listed.Content != want {
+		t.Fatalf("listing:\n%q\nwant\n%q", listed.Content, want)
+	}
+	if empty := tools.Execute(context.Background(), "read_document", `{"path":"empty"}`); empty.Content != "empty/ is empty" {
+		t.Fatalf("empty: %+v", empty)
+	}
+	if top := tools.Execute(context.Background(), "read_document", `{"path":"."}`); top.IsError || !strings.Contains(top.Content, "shop/") {
+		t.Fatalf("workspace root: %+v", top)
+	}
+}
