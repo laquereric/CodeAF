@@ -91,6 +91,9 @@ func (t *Toolbox) readDocument(ctx context.Context, args map[string]any) Result 
 	}
 	mediaType, supported := documentMediaType(full)
 	if !supported {
+		if info, statErr := os.Stat(full); statErr == nil && !info.IsDir() && iqLooksLikePlainText(full) {
+			return t.readPlainText(path, full, args) // IQ: plain text is read, not refused (iqread.go)
+		}
 		return errorf("read_document supports pdf, docx, and pptx files")
 	}
 	info, err := os.Stat(full)

@@ -516,7 +516,7 @@ func TestReadDocumentCapsSizeFormatAndPageRangeBeforeSpending(t *testing.T) {
 	tools, space := documentToolbox(t, wire, fakeModalities{})
 	spendCalls := 0
 	tools.media.BeforeSpend = func(context.Context, float64) error { spendCalls++; return nil }
-	documentFixture(t, space, "notes.txt", "plain text")
+	documentFixture(t, space, "notes.bin", "not\x00text") // IQ: plain text is read now (iqread.go); the cap holds for binary
 	documentFixture(t, space, "deck.pptx", "pptx bytes")
 	documentFixture(t, space, "small.pdf", "%PDF-1.7 small")
 	oversized := filepath.Join(space.Root(), "huge.pdf")
@@ -538,7 +538,7 @@ func TestReadDocumentCapsSizeFormatAndPageRangeBeforeSpending(t *testing.T) {
 		want      string
 	}{
 		{name: "size cap", arguments: `{"path":"huge.pdf"}`, want: "over the 25 MB document limit"},
-		{name: "format cap", arguments: `{"path":"notes.txt"}`, want: "supports pdf, docx, and pptx"},
+		{name: "format cap", arguments: `{"path":"notes.bin"}`, want: "supports pdf, docx, and pptx"},
 		{name: "missing file", arguments: `{"path":"absent.pdf"}`, want: "could not read absent.pdf"},
 		{name: "malformed pages", arguments: `{"path":"small.pdf","pages":"chapter two"}`, want: "pages must look like 1-5"},
 		{name: "inverted pages", arguments: `{"path":"small.pdf","pages":"9-2"}`, want: "must end at or after page 9"},

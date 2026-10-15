@@ -546,7 +546,7 @@ func (t *Toolbox) offered() []string {
 	if t.media != nil && t.media.Provider != nil && !t.isArmed("generate_image") {
 		families = append(families, FamilyMedia)
 	}
-	if t.media != nil && t.media.DocumentClient != nil && !t.isArmed("read_document") {
+	if t.documentsAvailable() && !t.isArmed("read_document") {
 		families = append(families, FamilyDocument)
 	}
 	return families
@@ -557,7 +557,7 @@ func (t *Toolbox) offered() []string {
 // it constant for the whole life of a leaf — and identical across every leaf of
 // a run, since they all share one brain.
 func (t *Toolbox) configuredFamilies() bool {
-	return t.media != nil && (t.media.Provider != nil || t.media.DocumentClient != nil)
+	return (t.media != nil && t.media.Provider != nil) || t.documentsAvailable()
 }
 
 // capabilitiesDefinition is the whole discovery surface: one tool, one
@@ -591,10 +591,14 @@ func (t *Toolbox) configuredFamilies() bool {
 // configured, and a worker that asks for something it already holds is answered
 // in one cheap line — see capabilities.
 func capabilitiesDefinition() ai.ToolDefinition {
+	documents := "documents: read a PDF, DOCX or PPTX into text."
+	if iqPlainDocuments() {
+		documents = "documents: read a text or source file, or a PDF, DOCX or PPTX, into text."
+	}
 	return define("capabilities",
 		"Load tools you do not have yet; they arrive on your next turn. Ask once, only if the work needs one. "+
 			"media: generate images, music, video, speech; look at an image. "+
-			"documents: read a PDF, DOCX or PPTX into text.",
+			documents,
 		map[string]any{
 			"need": map[string]any{"type": "string", "enum": []string{FamilyMedia, FamilyDocument}},
 		}, "need")
@@ -618,7 +622,7 @@ func (t *Toolbox) capabilities(args map[string]any) Result {
 			return errorf("media generation is not configured on this machine — do what the assignment needs without it and say plainly in your answer that it could not be done")
 		}
 	case FamilyDocument:
-		if t.media == nil || t.media.DocumentClient == nil {
+		if !t.documentsAvailable() {
 			return errorf("document parsing is not configured on this machine — do what the assignment needs without it and say plainly in your answer that it could not be done")
 		}
 	}
@@ -861,6 +865,7 @@ func (t *Toolbox) Definitions() []ai.ToolDefinition {
 func (t *Toolbox) optionalDefinitions() map[string]ai.ToolDefinition {
 	catalog := map[string]ai.ToolDefinition{}
 	if t.media == nil {
+		t.iqPlainDocumentDefinition(catalog)
 		return catalog
 	}
 	if t.media.Provider != nil {
@@ -907,6 +912,7 @@ func (t *Toolbox) optionalDefinitions() map[string]ai.ToolDefinition {
 			"question": prop("string", "optional question the worker will answer from the extracted text"),
 		}, "path")
 	}
+	t.iqPlainDocumentDefinition(catalog)
 	return catalog
 }
 
