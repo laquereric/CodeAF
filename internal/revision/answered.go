@@ -45,14 +45,18 @@ const (
 // already recorded. A check may answer a point; a file comparison may only say
 // whether the run wrote a named file, and every other shape stays not reached.
 func AnswerChecklist(points []store.AcceptancePoint, gate store.DeliveryGate, gateRead bool, wrote []string) []PointOutcome {
-	return AnswerChecklistReads(points, gate, gateRead, wrote, nil)
+	return AnswerChecklistReads(points, gate, gateRead, wrote, nil, false)
 }
 
 // AnswerChecklistReads is AnswerChecklist that also knows what the run READ (IQ). An ACTION point -- something
 // the run does on the way, which the acceptance reader files "a file to read" under -- that names a file the
 // run read and did not write is answered by that read. A behaviour point is never: what the finished work must
 // be is not settled by having looked at it.
-func AnswerChecklistReads(points []store.AcceptancePoint, gate store.DeliveryGate, gateRead bool, wrote, read []string) []PointOutcome {
+//
+// replied says the run settled clean with a non-empty answer. A REPLY point -- an action the run fulfils by what
+// it says (plan.PointReply) -- is answered by that answer. What is credited is that the answer was given, not
+// that it is right: the account says "the run's answer gives it", and the person reads the answer above it.
+func AnswerChecklistReads(points []store.AcceptancePoint, gate store.DeliveryGate, gateRead bool, wrote, read []string, replied bool) []PointOutcome {
 	outcomes := make([]PointOutcome, 0, len(points))
 	for _, point := range points {
 		outcome := PointOutcome{Behaviour: point.Behaviour, State: PointNotReached}
@@ -70,6 +74,12 @@ func AnswerChecklistReads(points []store.AcceptancePoint, gate store.DeliveryGat
 			}
 		}
 
+		if replied && point.Kind == "reply" {
+			outcome.State = PointAnswered
+			outcome.Why = "the run's answer gives it"
+			outcomes = append(outcomes, outcome)
+			continue
+		}
 		named := fileWords(point.Behaviour + " " + point.Quote)
 		if len(named) == 0 {
 			outcomes = append(outcomes, outcome)
@@ -77,7 +87,7 @@ func AnswerChecklistReads(points []store.AcceptancePoint, gate store.DeliveryGat
 		}
 		if matched := firstWrittenFile(named, wrote); matched != "" {
 			outcome.Why = "the run changed " + matched
-		} else if matched := firstWrittenFile(named, read); matched != "" && point.Kind == "action" {
+		} else if matched := firstWrittenFile(named, read); matched != "" && (point.Kind == "action" || point.Kind == "reply") {
 			outcome.State = PointAnswered
 			outcome.Why = "the run read " + matched
 		} else {

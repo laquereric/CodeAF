@@ -47,6 +47,9 @@ import (
 const (
 	PointBehaviour = "behaviour"
 	PointAction    = "action"
+	// PointReply (IQ) is an action the run fulfils by what it SAYS in its final answer -- state, explain,
+	// report, answer. It is an action (nothing looks for a test of it); the checklist credits it to the reply.
+	PointReply = "reply"
 )
 
 // Point is one thing the request states, the words of the request it is a
@@ -73,7 +76,7 @@ type Point struct {
 
 // Action reports that this point is something the RUN does rather than
 // something the finished work is, so nothing should look for a check for it.
-func (p Point) Action() bool { return p.Kind == PointAction }
+func (p Point) Action() bool { return p.Kind == PointAction || p.Kind == PointReply }
 
 // Behaviours is the half of a checklist a check could exist for, stated once
 // here because two readers in another package need the identical answer: the
@@ -118,7 +121,9 @@ states, in the request's own vocabulary, short enough to read in one breath.
 Some of what a request asks for is not a behaviour of the finished work at all
 but an ACTION of the run: a command to run, a report to make, a file to read, a
 step to take on the way. Write those down too, with kind "action"; write a
-behaviour of the finished work with kind "behaviour". The difference decides
+behaviour of the finished work with kind "behaviour". An action the run fulfils
+by what it SAYS in its final answer — a fact to state, a question to answer, a
+finding to report, something to explain — is kind "reply". The difference decides
 whether anything goes looking for a test of it, and nothing can test an action
 that happens once and leaves nothing behind.
 
@@ -156,7 +161,7 @@ var acceptanceSchema = json.RawMessage(`{
         "properties": {
           "behaviour": {"type": "string"},
           "quote": {"type": "string"},
-          "kind": {"type": "string", "enum": ["behaviour", "action"]}
+          "kind": {"type": "string", "enum": ["behaviour", "action", "reply"]}
         },
         "required": ["behaviour", "quote", "kind"],
         "additionalProperties": false
@@ -268,6 +273,9 @@ func NormalizeAcceptance(request string, points []Point) []Point {
 func pointKind(kind string) string {
 	if strings.EqualFold(strings.TrimSpace(kind), PointAction) {
 		return PointAction
+	}
+	if strings.EqualFold(strings.TrimSpace(kind), PointReply) {
+		return PointReply
 	}
 	return PointBehaviour
 }

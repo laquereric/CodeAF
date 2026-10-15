@@ -218,7 +218,7 @@ func TestTheAcceptanceSchemaNamesBothKinds(t *testing.T) {
 	if err := json.Unmarshal(acceptanceSchema, &schema); err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(acceptanceSchema), `"enum": ["behaviour", "action"]`) {
+	if !strings.Contains(string(acceptanceSchema), `"enum": ["behaviour", "action", "reply"]` /* IQ: reply */) {
 		t.Fatalf("the schema does not bound the kind:\n%s", acceptanceSchema)
 	}
 	if !strings.Contains(acceptancePrompt, `kind "action"`) {

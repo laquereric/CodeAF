@@ -2789,7 +2789,8 @@ func (w *settlementWatch) compose(nodes []store.Node) headlessOutcome {
 		// second time — a failed node's error carries it here already, and one
 		// list said twice reads as two findings.
 		var gateAnswered bool
-		outcome.Checklist, gateAnswered = w.checklistFor(final.ID, outcome.Artifacts)
+		replied := outcome.Verdict == "" && strings.TrimSpace(outcome.Deliverable) != ""
+		outcome.Checklist, gateAnswered = w.checklistFor(final.ID, outcome.Artifacts, replied)
 		if !gateAnswered && !strings.Contains(outcome.Deliverable, revision.ChecklistHeading) {
 			if account := revision.ChecklistAccount(outcome.Checklist); account != "" {
 				if strings.TrimSpace(outcome.Deliverable) != "" {
@@ -2840,7 +2841,7 @@ func (w *settlementWatch) compose(nodes []store.Node) headlessOutcome {
 // is: a store that will not answer costs the account, never the ending. AND AN
 // UNREADABLE GATE IS NOT A GATE THAT ANSWERED — the list is still the person's
 // and is still accounted for, with nothing claimed answered.
-func (w *settlementWatch) checklistFor(nodeID string, wrote []string) (rows []revision.PointOutcome, gateAnswered bool) {
+func (w *settlementWatch) checklistFor(nodeID string, wrote []string, replied bool) (rows []revision.PointOutcome, gateAnswered bool) {
 	if w.graph == nil {
 		return nil, false
 	}
@@ -2853,7 +2854,7 @@ func (w *settlementWatch) checklistFor(nodeID string, wrote []string) (rows []re
 		gate, gateRead = store.DeliveryGate{}, false
 	}
 	gateAnswered = gateRead && len(gate.Exercises) > 0
-	return revision.AnswerChecklistReads(acceptance.Points, gate, gateRead, wrote, w.produced.readList()), gateAnswered
+	return revision.AnswerChecklistReads(acceptance.Points, gate, gateRead, wrote, w.produced.readList(), replied), gateAnswered
 }
 
 // deliveredWhole answers the exit code's own question of a settled job: is what
