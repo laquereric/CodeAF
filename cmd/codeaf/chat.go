@@ -1082,6 +1082,12 @@ func buildBrain(w *chatWindow, session string, opts brainOptions) (*chatBrain, e
 		if opts.produced != nil && len(absolute) > 0 {
 			opts.produced.add(absolute...)
 		}
+		// IQ: and what it read, so a read-only task's checklist can credit the read (revision.AnswerChecklistReads).
+		if reads, ok := opts.produced.(interface{ addRead(string) }); ok && outcome != nil {
+			for _, consulted := range outcome.Consulted {
+				reads.addRead(filepath.Join(jobDir, consulted))
+			}
+		}
 		if err == nil && outcome != nil && (outcome.Stop == exec.StopPaused || outcome.Stop == exec.StopCancelled) {
 			// A cancel is news for the plan above this leaf, and it is the one
 			// ending that never told it anything. A pause is not: the work is

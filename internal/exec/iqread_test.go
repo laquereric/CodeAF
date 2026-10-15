@@ -59,3 +59,15 @@ func TestIQDocumentsOfferedOnlyWhileGoverned(t *testing.T) {
 		t.Fatal("armed read_document carries its schema")
 	}
 }
+
+// A successful read_document is recorded under the leaf; a refused one is not.
+func TestIQReadDocumentIsConsulted(t *testing.T) {
+	space := workspace(t)
+	_ = os.WriteFile(filepath.Join(space.Root(), "calc.py"), []byte("def add(a, b):\n"), 0o644)
+	tools := NewToolbox(space, "7", nil)
+	tools.Execute(context.Background(), "read_document", `{"path":"calc.py"}`)
+	tools.Execute(context.Background(), "read_document", `{"path":"absent.py"}`)
+	if got := space.Consulted("7"); len(got) != 1 || got[0] != "calc.py" {
+		t.Fatalf("consulted = %v", got)
+	}
+}

@@ -2853,7 +2853,7 @@ func (w *settlementWatch) checklistFor(nodeID string, wrote []string) (rows []re
 		gate, gateRead = store.DeliveryGate{}, false
 	}
 	gateAnswered = gateRead && len(gate.Exercises) > 0
-	return revision.AnswerChecklist(acceptance.Points, gate, gateRead, wrote), gateAnswered
+	return revision.AnswerChecklistReads(acceptance.Points, gate, gateRead, wrote, w.produced.readList()), gateAnswered
 }
 
 // deliveredWhole answers the exit code's own question of a settled job: is what
@@ -3298,6 +3298,33 @@ type errandRegistry struct {
 	mu    sync.Mutex
 	seen  map[string]bool
 	paths []string
+	// read is what the workers read through read_document (IQ), kept apart from what they wrote.
+	read []string
+}
+
+// addRead takes an absolute path a leaf read (IQ: the checklist credits an action point's read).
+func (r *errandRegistry) addRead(path string) {
+	if r == nil || path == "" {
+		return
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	for _, kept := range r.read {
+		if kept == path {
+			return
+		}
+	}
+	r.read = append(r.read, path)
+}
+
+// readList is what the workers read, in the order they read it.
+func (r *errandRegistry) readList() []string {
+	if r == nil {
+		return nil
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return append([]string(nil), r.read...)
 }
 
 // add takes absolute paths from a leaf that has just landed.

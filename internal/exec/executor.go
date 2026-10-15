@@ -223,6 +223,8 @@ const (
 type Outcome struct {
 	Text      string
 	Artifacts []string
+	// Consulted is what the leaf read through read_document (IQ: iqread.go) -- a read-only task's evidence.
+	Consulted []string
 	Turns     int
 	ToolCalls int
 	Decayed   int // observations faded to stubs, a measure of how much context was reclaimed

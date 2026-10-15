@@ -61,6 +61,8 @@ type Workspace struct {
 
 	mutex     sync.Mutex
 	artifacts map[string]map[string]bool
+	// iqConsulted is what each leaf read through read_document (IQ: iqread.go), workspace-relative.
+	iqConsulted map[string]map[string]bool
 	// mutations is a monotonic per-leaf revision, not a count of distinct
 	// paths. Rewriting the same file twice is two successful actions even though
 	// the artifact set still has one member; turn-context consumption needs the

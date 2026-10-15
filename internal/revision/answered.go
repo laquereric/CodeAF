@@ -45,6 +45,14 @@ const (
 // already recorded. A check may answer a point; a file comparison may only say
 // whether the run wrote a named file, and every other shape stays not reached.
 func AnswerChecklist(points []store.AcceptancePoint, gate store.DeliveryGate, gateRead bool, wrote []string) []PointOutcome {
+	return AnswerChecklistReads(points, gate, gateRead, wrote, nil)
+}
+
+// AnswerChecklistReads is AnswerChecklist that also knows what the run READ (IQ). An ACTION point -- something
+// the run does on the way, which the acceptance reader files "a file to read" under -- that names a file the
+// run read and did not write is answered by that read. A behaviour point is never: what the finished work must
+// be is not settled by having looked at it.
+func AnswerChecklistReads(points []store.AcceptancePoint, gate store.DeliveryGate, gateRead bool, wrote, read []string) []PointOutcome {
 	outcomes := make([]PointOutcome, 0, len(points))
 	for _, point := range points {
 		outcome := PointOutcome{Behaviour: point.Behaviour, State: PointNotReached}
@@ -69,6 +77,9 @@ func AnswerChecklist(points []store.AcceptancePoint, gate store.DeliveryGate, ga
 		}
 		if matched := firstWrittenFile(named, wrote); matched != "" {
 			outcome.Why = "the run changed " + matched
+		} else if matched := firstWrittenFile(named, read); matched != "" && point.Kind == "action" {
+			outcome.State = PointAnswered
+			outcome.Why = "the run read " + matched
 		} else {
 			outcome.State = PointNotAnswered
 			outcome.Why = "nothing this run wrote is " + strings.Join(named, ", ")

@@ -1069,6 +1069,9 @@ func (t *Toolbox) execute(ctx context.Context, name string, arguments string) (o
 		result = t.viewImage(ctx, args)
 	case "read_document":
 		result = t.readDocument(ctx, args)
+		if !result.IsError {
+			t.iqNoteRead(args)
+		}
 	case "capabilities":
 		result = t.capabilities(args)
 	case "share":

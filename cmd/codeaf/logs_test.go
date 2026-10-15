@@ -42,6 +42,11 @@ func TestMain(m *testing.M) {
 	if _, pinned := os.LookupEnv(calllog.EnvVar); !pinned {
 		os.Setenv(calllog.EnvVar, calllog.OffValue)
 	}
+	// IQ: the gate is off here (internal/iqgate) -- a governed shell's IQ_SEAM_URL would send every test
+	// tool call to the live seam, which refuses Bash, and the suite fails and hangs on what it refused.
+	for _, name := range []string{"IQ_SEAM_URL", "IQ_HARNESS_SESSION"} {
+		os.Unsetenv(name)
+	}
 	// AND THE POOL'S SUBMIT ADDRESS IS PINNED, to a machine that does not
 	// answer, unless this process was deliberately started with one. The
 	// resolver holds the relay's own address when nothing says otherwise, so a

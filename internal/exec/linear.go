@@ -930,6 +930,7 @@ func (l *Linear) Run(ctx context.Context, task Task) (returned *Outcome, runErr 
 			// before the list is rebuilt.
 			l.workspace.RecordChanges(task.leafKey())
 			returned.Artifacts = l.workspace.Artifacts(task.leafKey())
+			returned.Consulted = l.workspace.Consulted(task.leafKey())
 		}
 		task.control.detach(tools, terminated)
 	}()
@@ -1683,6 +1684,7 @@ func (l *Linear) land(
 	// the list is the world's answer and not only the write tools'.
 	l.workspace.RecordChanges(task.leafKey())
 	outcome.Artifacts = l.workspace.Artifacts(task.leafKey())
+	outcome.Consulted = l.workspace.Consulted(task.leafKey())
 	// The closing reading, and it is taken on EVERY landing — including the one
 	// the leaf was ordered into. An exhausted leaf still changed the tree it was
 	// standing in, and skipping the second reading there would leave the runs

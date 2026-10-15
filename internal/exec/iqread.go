@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"unicode/utf8"
 
@@ -129,4 +130,45 @@ func (t *Toolbox) iqPlainDocumentDefinition(catalog map[string]ai.ToolDefinition
 		"pages":    prop("string", "optional PDF page range such as 1-5"),
 		"question": prop("string", "optional question the worker will answer from the extracted text"),
 	}, "path")
+}
+
+// iqNoteRead records a successful read_document under this leaf, for the run's checklist (Outcome.Consulted).
+func (t *Toolbox) iqNoteRead(args map[string]any) {
+	path := strings.TrimSpace(stringArg(args, "path"))
+	if path == "" || t.workspace == nil {
+		return
+	}
+	if full, err := t.workspace.Resolve(path); err == nil {
+		t.workspace.RecordConsulted(t.leaf, full)
+	}
+}
+
+// RecordConsulted notes a file a leaf read; Consulted lists them, workspace-relative and sorted.
+func (w *Workspace) RecordConsulted(leaf, full string) {
+	relative, err := filepath.Rel(w.root, full)
+	if err != nil || strings.HasPrefix(relative, "..") {
+		if relative, err = filepath.Rel(w.real, full); err != nil || strings.HasPrefix(relative, "..") {
+			return
+		}
+	}
+	w.mutex.Lock()
+	defer w.mutex.Unlock()
+	if w.iqConsulted == nil {
+		w.iqConsulted = map[string]map[string]bool{}
+	}
+	if w.iqConsulted[leaf] == nil {
+		w.iqConsulted[leaf] = map[string]bool{}
+	}
+	w.iqConsulted[leaf][relative] = true
+}
+
+func (w *Workspace) Consulted(leaf string) []string {
+	w.mutex.Lock()
+	defer w.mutex.Unlock()
+	paths := make([]string, 0, len(w.iqConsulted[leaf]))
+	for path := range w.iqConsulted[leaf] {
+		paths = append(paths, path)
+	}
+	sort.Strings(paths)
+	return paths
 }
