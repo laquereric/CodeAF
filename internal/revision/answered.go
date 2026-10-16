@@ -53,6 +53,10 @@ func AnswerChecklist(points []store.AcceptancePoint, gate store.DeliveryGate, ga
 // run read and did not write is answered by that read. A behaviour point is never: what the finished work must
 // be is not settled by having looked at it.
 //
+// An action point that names folders rather than files ("read the code under shop/ and tests/") is answered when
+// the run read at least one file under EVERY folder it names; one folder left unread leaves the point as upstream
+// leaves it.
+//
 // replied says the run settled clean with a non-empty answer. A REPLY point -- an action the run fulfils by what
 // it says (plan.PointReply) -- is answered by that answer. What is credited is that the answer was given, not
 // that it is right: the account says "the run's answer gives it", and the person reads the answer above it.
@@ -82,6 +86,10 @@ func AnswerChecklistReads(points []store.AcceptancePoint, gate store.DeliveryGat
 		}
 		named := fileWords(point.Behaviour + " " + point.Quote)
 		if len(named) == 0 {
+			if why := iqFolderReads(point, read); why != "" {
+				outcome.State = PointAnswered
+				outcome.Why = why
+			}
 			outcomes = append(outcomes, outcome)
 			continue
 		}
