@@ -21,3 +21,12 @@ func TestIQReplyIsAnActionTheAnswerFulfils(t *testing.T) {
 		t.Fatal("the prompt never tells the model what a reply is")
 	}
 }
+
+// IQ: an analysis whose result the answer carries (trace a call path) is a reply; reading stays an action.
+func TestIQAnAnalysisTheAnswerCarriesIsAReply(t *testing.T) {
+	for _, want := range []string{"trace a call path", "work out why something fails", `stays "action"`} {
+		if !strings.Contains(strings.Join(strings.Fields(acceptancePrompt), " "), want) {
+			t.Fatalf("the prompt never says %q", want)
+		}
+	}
+}

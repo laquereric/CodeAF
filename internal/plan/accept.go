@@ -123,7 +123,11 @@ but an ACTION of the run: a command to run, a report to make, a file to read, a
 step to take on the way. Write those down too, with kind "action"; write a
 behaviour of the finished work with kind "behaviour". An action the run fulfils
 by what it SAYS in its final answer — a fact to state, a question to answer, a
-finding to report, something to explain — is kind "reply". The difference decides
+finding to report, something to explain — is kind "reply". So is an analysis
+whose result the answer carries: trace a call path, work out why something fails,
+find where something happens, compare options. The work is done on the way, but
+the answer is the only place it shows, so it is "reply", not "action". Reading a
+file or a folder stays "action": the run's reads show it. The difference decides
 whether anything goes looking for a test of it, and nothing can test an action
 that happens once and leaves nothing behind.
 
