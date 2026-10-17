@@ -6,7 +6,7 @@
 // toolbox a task worker runs its tools through (internal/exec/iqgate.go). One client, so the two can never ask
 // the seam different questions.
 //
-//	Push     POST /push {operationId, session, tool, args (path-ish keys only), harness_session} -> a Verdict.
+//	Push     POST /push {operationId, session, tool, [action], args (path-ish keys only), harness_session} -> a Verdict.
 //	Observe  POST /observe {operationId, session, ok, error, duration_ms, harness_session} -- best effort.
 //
 // IQ_SEAM_URL unset -> Enabled() is false and every caller behaves as upstream built it. The credential is
@@ -30,6 +30,8 @@ type Verdict struct {
 	Admitted    bool   `json:"admitted"`
 	Reason      string `json:"reason"`
 	Ask         string `json:"ask"`
+	// Capability is what the seam decided, mcp:call:<tool> or the action asked as.
+	Capability string `json:"capability"`
 }
 
 // URL is the seam's base, or "" when this process is not governed.
@@ -86,10 +88,21 @@ func SmallArgs(raw string) map[string]any {
 // Push asks the seam whether one tool call may run. An error means the seam could not be asked: callers fail
 // closed on it.
 func Push(base, operationID, tool, rawArgs, harnessSession string) (Verdict, error) {
-	raw, err := Post(base, "/push", map[string]any{
+	return PushAction(base, operationID, tool, "", rawArgs, harnessSession)
+}
+
+// PushAction is Push for a step that is not an MCP tool call: action names its own capability (codeaf:verify),
+// which a seam that reads it decides instead of mcp:call:<tool>. A seam that does not read it decides
+// mcp:call:<tool> as before, so tool stays the step's name either way.
+func PushAction(base, operationID, tool, action, rawArgs, harnessSession string) (Verdict, error) {
+	body := map[string]any{
 		"operationId": operationID, "session": Credential(), "tool": tool,
 		"args": SmallArgs(rawArgs), "harness_session": harnessSession,
-	})
+	}
+	if action != "" {
+		body["action"] = action
+	}
+	raw, err := Post(base, "/push", body)
 	if err != nil {
 		return Verdict{}, err
 	}

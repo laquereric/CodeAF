@@ -61,10 +61,10 @@ func TestIQAReadingTheSeamRefusesIsNeverRun(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(space, "ran")); err == nil {
 		t.Fatal("the command ran although the seam refused it")
 	}
-	if !strings.Contains(result.Error, "IQ refusal: mcp:call:verify (no_permit)") || !strings.Contains(result.Error, "`touch ran`") {
+	if !strings.Contains(result.Error, "IQ refusal: codeaf:verify (no_permit)") || !strings.Contains(result.Error, "`touch ran`") {
 		t.Fatalf("the refusal is the reason: %q", result.Error)
 	}
-	if len(fake.pushes) != 1 || fake.pushes[0]["tool"] != "verify" || fake.pushes[0]["session"] != "tok" {
+	if len(fake.pushes) != 1 || fake.pushes[0]["tool"] != "verify" || fake.pushes[0]["action"] != "codeaf:verify" || fake.pushes[0]["session"] != "tok" {
 		t.Fatalf("asked as verify with the credential: %+v", fake.pushes)
 	}
 	if args, _ := fake.pushes[0]["args"].(map[string]any); args["path"] != "." {
