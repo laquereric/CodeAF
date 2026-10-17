@@ -1834,6 +1834,7 @@ func buildBrain(w *chatWindow, session string, opts brainOptions) (*chatBrain, e
 							// The same distinction the first gate makes; drawing it
 							// only there would launder the verdict one round later.
 							outcome.Verdict = revision.GateVerdict(closed)
+							iqTakeRejudgedCoverage(&evidence, closed) // IQ: the row carries the measurement that closed it
 						} else if closed.Checked && strings.TrimSpace(closed.Gaps) != "" {
 							// The second reading is the current one: it was taken
 							// against the revised text, so it is what any further
