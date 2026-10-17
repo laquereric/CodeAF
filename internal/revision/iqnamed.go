@@ -58,7 +58,10 @@ func iqNamesCheck(text, check string) bool {
 	return false
 }
 
-// iqWhereChecksGo is the coverage brief's sentence on where a check belongs (IQ).
+// iqWhereChecksGo is the coverage brief's sentence on where a check belongs (IQ). The first round's brief
+// carries it too (IQWhereChecksGo, cmd/codeaf/iqtests.go), so a fix writes its checks before the gate asks.
+const IQWhereChecksGo = iqWhereChecksGo
+
 const iqWhereChecksGo = "Put each check where this project's own verification runs it: a new test file " +
 	"beside its existing tests, named the way they are named (for pytest, tests/test_<name>.py), so the " +
 	"project's own test command collects it. A check that command does not collect counts for nothing. " +

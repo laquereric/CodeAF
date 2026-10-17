@@ -2275,8 +2275,9 @@ func leafContract(plans *jobPlans, planNode *plan.Node, node store.Node) string 
 	// assignment has already argued with. plan.Spec.Render puts them first for
 	// the same reason; this is that ordering applied to the leaf's own text,
 	// where the spec is not rendered.
-	return plan.RulesAbove(leafSpec(plans, planNode, node).Constraints,
-		leafMethod(plans, planNode, node))
+	spec := leafSpec(plans, planNode, node)
+	return iqWithTestGuidance(plan.RulesAbove(spec.Constraints, leafMethod(plans, planNode, node)),
+		spec, node.Provenance.Intent)
 }
 
 // leafMethod is the working method itself, read from the freshest place that
