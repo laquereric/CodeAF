@@ -30,3 +30,13 @@ func TestIQAnAnalysisTheAnswerCarriesIsAReply(t *testing.T) {
 		}
 	}
 }
+
+// IQ: a rule about how the change is made (smallest change, do not touch the tests) is an action, not a behaviour.
+func TestIQARuleAboutTheChangeIsAnAction(t *testing.T) {
+	prompt := strings.Join(strings.Fields(acceptancePrompt), " ")
+	for _, want := range []string{"A rule about HOW the change is made", "make the smallest change", "do not touch the tests", `is kind "action" too`} {
+		if !strings.Contains(prompt, want) {
+			t.Fatalf("the prompt never says %q", want)
+		}
+	}
+}

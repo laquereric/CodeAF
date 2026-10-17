@@ -127,7 +127,11 @@ finding to report, something to explain — is kind "reply". So is an analysis
 whose result the answer carries: trace a call path, work out why something fails,
 find where something happens, compare options. The work is done on the way, but
 the answer is the only place it shows, so it is "reply", not "action". Reading a
-file or a folder stays "action": the run's reads show it. The difference decides
+file or a folder stays "action": the run's reads show it. A rule about HOW the
+change is made rather than what the finished work does — make the smallest
+change, keep the fix to one line, do not touch the tests, keep the existing
+style — is kind "action" too: no check of the finished work can fail because a
+change was larger than it needed to be. The difference decides
 whether anything goes looking for a test of it, and nothing can test an action
 that happens once and leaves nothing behind.
 

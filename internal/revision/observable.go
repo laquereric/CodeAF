@@ -258,6 +258,9 @@ func WeighAssertions(root, job string, record []string,
 		if check == "" || index >= len(points) {
 			continue
 		}
+		if iqPointNamesCheck(points[index], check) {
+			continue // IQ: a named check is what the point means by passing; its assertions are the point's own
+		}
 		observables := Observables(points[index].Quote, vocabulary)
 		if len(observables) == 0 {
 			continue

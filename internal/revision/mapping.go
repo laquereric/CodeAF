@@ -72,6 +72,9 @@ func GroundMapping(root string, record []string,
 		if check == "" || index >= len(points) {
 			continue
 		}
+		if iqPointNamesCheck(points[index], check) {
+			continue // IQ: the point names this check; it is grounded by its own words (iqnamed.go)
+		}
 		wanted := symbolsIn(points[index].Behaviour)
 		if len(wanted) == 0 {
 			continue

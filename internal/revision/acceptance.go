@@ -586,6 +586,7 @@ func MapChecks(ctx context.Context, settings config.Config, client *pool.Client,
 	for _, point := range points {
 		mapping = append(mapping, store.ExercisedPoint{Point: point.Behaviour})
 	}
+	iqMapNamedChecks(mapping, points, checks) // IQ: a point that names a check is exercised by it (iqnamed.go)
 	if client == nil || len(points) == 0 || len(checks) == 0 {
 		return mapping
 	}
@@ -638,6 +639,9 @@ func MapChecks(ctx context.Context, settings config.Config, client *pool.Client,
 	for index, row := range answer.Mapped {
 		if index >= len(mapping) {
 			break
+		}
+		if mapping[index].Check != "" {
+			continue // IQ: named by the point itself; the model's guess does not replace it
 		}
 		if named, ok := known[strings.ToLower(strings.TrimSpace(row.Check))]; ok {
 			mapping[index].Check = named
