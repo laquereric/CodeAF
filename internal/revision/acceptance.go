@@ -836,6 +836,10 @@ func unexercisedFinding(found coverage, stated int) Judgment {
 		}
 	}
 	gap.WriteString("Write the check for each, and make it pass.")
+	// IQ: and WHERE. A check the project's own verification never runs exercises nothing, and a worker told by
+	// the request "do not change the tests" kept its checks out of the suite -- check_coupons.py at the root,
+	// which pytest never collects -- so the same finding came back after a round that wrote them.
+	gap.WriteString(" " + iqWhereChecksGo)
 	// AND THE LAST LINE IS THE SCORE. A repair round is aimed at what REMAINS,
 	// and a brief that restates the whole list every round tells the worker
 	// nothing about whether the last round moved anything. ofetch s7 named

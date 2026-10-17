@@ -3,6 +3,7 @@ package revision
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/Agent-Field/codeaf/internal/plan"
@@ -45,5 +46,18 @@ func TestIQAPointThatNamesACheckIsExercisedByIt(t *testing.T) {
 	}
 	if !iqNamesCheck("TestParse handles empty input", "pkg.TestParse") || iqNamesCheck("adds two numbers", "math adds two numbers") {
 		t.Fatal("a Go-style name is matched by its last segment; a sentence-named test only whole")
+	}
+}
+
+// The coverage brief says where a check goes, and that adding a test file is not changing the tests.
+func TestIQTheCoverageBriefSaysWhereAChecksGoes(t *testing.T) {
+	judgment := unexercisedFinding(coverage{missing: []string{"SAVE25 gives 25% off"},
+		missingLines: []string{"SAVE25 gives 25% off"}}, 3)
+	brief := judgment.Gaps
+	for _, want := range []string{"Write the check for each, and make it pass.", "where this project's own verification runs it",
+		"tests/test_<name>.py", "Adding a new test file is not changing the existing tests"} {
+		if !strings.Contains(brief, want) {
+			t.Fatalf("the brief never says %q:\n%s", want, brief)
+		}
 	}
 }

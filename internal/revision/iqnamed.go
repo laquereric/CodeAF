@@ -57,3 +57,10 @@ func iqNamesCheck(text, check string) bool {
 	}
 	return false
 }
+
+// iqWhereChecksGo is the coverage brief's sentence on where a check belongs (IQ).
+const iqWhereChecksGo = "Put each check where this project's own verification runs it: a new test file " +
+	"beside its existing tests, named the way they are named (for pytest, tests/test_<name>.py), so the " +
+	"project's own test command collects it. A check that command does not collect counts for nothing. " +
+	"Adding a new test file is not changing the existing tests: a rule against changing the tests forbids " +
+	"editing the tests that are there, never adding one beside them."
