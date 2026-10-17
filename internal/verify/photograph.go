@@ -230,6 +230,9 @@ func photograph(
 			// shell, so there is no point trying another.
 			reading.Unread = fmt.Sprintf("`%s` could not be started: this machine has no "+
 				"%s for the reading's shell preamble", rung.Command, readingShell)
+			if result.Error != "" { // IQ: the seam refused it (iqverify.go), and that is the reason
+				reading.Unread = result.Error
+			}
 			return reading
 		case result.TimedOut:
 			// A HUNG SUITE IS AN INCOMPLETE OBSERVATION, NOT A RED ONE — but an

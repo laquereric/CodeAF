@@ -139,6 +139,12 @@ func RunReading(
 		return Result{}, false
 	}
 
+	// IQ: the seam is asked before a workspace-chosen command runs (iqverify.go).
+	observe, refusal := iqAdmitReading(workspace, strategy)
+	if refusal != "" {
+		return Result{Strategy: strategy, Exit: -1, Error: refusal}, false
+	}
+
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
@@ -186,6 +192,11 @@ func RunReading(
 		}
 	}
 	output := captured.String()
+	if err == nil {
+		observe(true, "")
+	} else {
+		observe(false, runnerTrouble(output))
+	}
 	reported, failing, read := strategy.Read.Read(output)
 	if !read {
 		// The strategy's own reader found nothing it recognised. The same bytes
